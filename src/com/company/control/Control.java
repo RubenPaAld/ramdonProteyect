@@ -5,10 +5,7 @@ import com.company.utilities.In;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Control {
 
@@ -126,7 +123,7 @@ public class Control {
             e.printStackTrace();
         }
         int registros = numRegistros();
-        LinkedList<Mueble> l = new LinkedList<>();
+        ArrayList<Mueble> l = new ArrayList<>();
 
         for (int i = 0; i < registros; i++){
 
@@ -134,9 +131,8 @@ public class Control {
 
             mueble.read(raf);
 
-            l.addLast(mueble);
+            l.add(mueble);
         }
-
         System.out.println("\t1 - codigo");
         System.out.println("\t2 - nombre");
         System.out.println("\t3 - stock minimo");
