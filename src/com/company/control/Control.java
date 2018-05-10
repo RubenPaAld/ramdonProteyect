@@ -5,11 +5,14 @@ import com.company.utilities.In;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Control {
 
     private RandomAccessFile raf;
-
 
     private int numRegistros() {
 
@@ -36,7 +39,7 @@ public class Control {
             System.out.println("\t4 - LISTADO");
             System.out.println("\t5 - MODIFICAR REGISTRO");
             System.out.println("\t6 - SALIR");
-            System.out.print("\t\t Opcion: ");
+            System.out.print("\t\tOpcion: ");
 
             switch (In.getInt(1,6)){
 
@@ -117,29 +120,83 @@ public class Control {
 
     private void listado() {
 
-        System.out.println("===LISTADO DE MUEBLES===");
-        int registros = numRegistros();
-        Mueble mueble = new Mueble();
-
         try {
             raf.seek(0);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        int registros = numRegistros();
+        LinkedList<Mueble> l = new LinkedList<>();
 
         for (int i = 0; i < registros; i++){
 
+            Mueble mueble = new Mueble();
+
             mueble.read(raf);
 
-            System.out.println("Mueble - " + (i+1));
-            System.out.println("\tcodigo: "+mueble.getCodigo());
-            System.out.println("\tnombre: "+mueble.getNombre());
-            System.out.println("\tstock minimo: "+mueble.getStockMin());
-            System.out.println("\tstock maximo: "+mueble.getStockMax());
-            System.out.println("\tstock activo: "+mueble.getStockAct());
-            System.out.println("\tprecio: "+mueble.getPrecio());
+            l.addLast(mueble);
+        }
+
+        System.out.println("\t1 - codigo");
+        System.out.println("\t2 - nombre");
+        System.out.println("\t3 - stock minimo");
+        System.out.println("\t4 - stock maximo");
+        System.out.println("\t5 - stock activo");
+        System.out.println("\t6 - precio");
+        System.out.print("\t\t opcion: ");
+
+        int op = In.getInt(1,6);
+        Comparator<Mueble> c = null;
+
+        switch (op) {
+            case 1:
+                c = Comparator.comparingInt(Mueble::getCodigo);
+                break;
+            case 2:
+                c = Comparator.comparing(Mueble::getNombre);
+                break;
+            case 3:
+                c = Comparator.comparingInt(Mueble::getStockMin);
+                break;
+            case 4:
+                c = Comparator.comparingInt(Mueble::getStockMax);
+                break;
+            case 5:
+                c = Comparator.comparingInt(Mueble::getStockAct);
+                break;
+            case 6:
+                c = Comparator.comparingDouble(Mueble::getPrecio);
+                break;
+        }
+        System.out.println("\n1 - Ascendiente");
+        System.out.print("2 - Descendiente");
+        System.out.print("\t\topcion: ");
+
+        int reverser = In.getInt(1,2);
+
+        if (reverser == 2)
+            c = c.reversed();
+
+        Collections.sort(l,c);
+
+        System.out.println("===LISTADO DE MUEBLES===");
+
+        for (Mueble mueble: l){
+
+            imprimirRegistro(mueble);
+            System.out.println("----------------------");
         }
         System.out.println();
+    }
+
+    private void imprimirRegistro(Mueble e) {
+
+        System.out.println("\tcodigo: "+e.getCodigo());
+        System.out.println("\tnombre: "+e.getNombre());
+        System.out.println("\tstock minimo: "+e.getStockMin());
+        System.out.println("\tstock maximo: "+e.getStockMax());
+        System.out.println("\tstock activo: "+e.getStockAct());
+        System.out.println("\tprecio: "+e.getPrecio());
     }
 
     private void verRegistro() {
@@ -149,12 +206,7 @@ public class Control {
 
         Mueble e = getRegistro(pos);
 
-        System.out.println("\tcodigo: "+e.getCodigo());
-        System.out.println("\tnombre: "+e.getNombre());
-        System.out.println("\tstock minimo: "+e.getStockMin());
-        System.out.println("\tstock maximo: "+e.getStockMax());
-        System.out.println("\tstock activo: "+e.getStockAct());
-        System.out.println("\tprecio: "+e.getPrecio());
+        imprimirRegistro(e);
 
     }
 
