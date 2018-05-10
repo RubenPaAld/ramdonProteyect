@@ -5,7 +5,6 @@ import com.company.utilities.In;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Optional;
 
 public class Control {
 
@@ -35,10 +34,11 @@ public class Control {
             System.out.println("\t2 - BAJAS");
             System.out.println("\t3 - VER REGISTRO");
             System.out.println("\t4 - LISTADO");
-            System.out.println("\t5 - SALIR");
+            System.out.println("\t5 - MODIFICAR REGISTRO");
+            System.out.println("\t6 - SALIR");
             System.out.print("\t\t Opcion: ");
 
-            switch (In.getInt(1,5)){
+            switch (In.getInt(1,6)){
 
                 case 1: altas();
                         break;
@@ -48,10 +48,71 @@ public class Control {
                         break;
                 case 4: listado();
                         break;
-                case 5: break exit;
+                case 5: modificarRegistro();
+                        break;
+                case 6: break exit;
             }
         }
         System.out.println("Fin del programa");
+    }
+
+    private void modificarRegistro() {
+
+        System.out.print("inserte el numero del registro a modificar: ");
+        int pos = In.getInt(0,numRegistros());
+
+        Mueble e = getRegistro(pos);
+
+        exit:
+        while (true){
+
+            System.out.println("\t1 - codigo: "+e.getCodigo());
+            System.out.println("\t2 - nombre: "+e.getNombre());
+            System.out.println("\t3 - stock minimo: "+e.getStockMin());
+            System.out.println("\t4 - stock maximo: "+e.getStockMax());
+            System.out.println("\t5 - stock activo: "+e.getStockAct());
+            System.out.println("\t6 - precio: "+e.getPrecio());
+            System.out.println("\t7 - salir");
+            System.out.print("\t\t opcion: ");
+
+            int op = In.getInt(1,7);
+
+            switch (op) {
+                case 1:
+                    System.out.print("nuevo codigo:");
+                    e.setCodigo(In.getInt());
+                    break;
+                case 2:
+                    System.out.print("nuevo nombre: ");
+                    StringBuilder sb = new StringBuilder(In.getString(25));
+                    sb.setLength(25);
+                    e.setNombre(sb.toString());
+                    break;
+                case 3:
+                    System.out.print("nuevo stock minimo: ");
+                    e.setStockMin(In.getInt(0,e.getStockMax()));
+                    break;
+                case 4:
+                    System.out.print("nuevo stock maximo: ");
+                    e.setStockMax(In.getInt(e.getStockMin(),Integer.MAX_VALUE));
+                    break;
+                case 5:
+                    System.out.print("nuevo stock activo: ");
+                    e.setStockMax(In.getInt(e.getStockMin(),e.getStockMax()));
+                    break;
+                case 6:
+                    System.out.print("nuevo precio: ");
+                    e.setPrecio(In.getDouble(0,Double.MAX_VALUE));
+                    break;
+                case 7: break exit;
+            }
+        }
+        try {
+            raf.seek(Mueble.size()* (pos-1));
+            e.write(raf);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
     }
 
     private void listado() {
