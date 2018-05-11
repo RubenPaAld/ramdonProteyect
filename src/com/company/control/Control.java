@@ -3,6 +3,7 @@ package com.company.control;
 import com.company.entity.Mueble;
 import com.company.utilities.In;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.*;
@@ -10,18 +11,92 @@ import java.util.*;
 public class Control {
 
     private RandomAccessFile raf;
+    private String url;
 
     private int numRegistros() {
 
         try {
             return (int) raf.length()/Mueble.size();
+
         } catch (IOException e) {
             return -1;
         }
     }
 
-    public Control(RandomAccessFile raf) {
-        this.raf = raf;
+    private long rafSize() {
+
+        try {
+            return  raf.length();
+        } catch (IOException e) {
+            return -1;
+        }
+    }
+
+    private void cambiarLongitudFichero(long tam){
+
+        try {
+            raf.setLength(tam);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void cerrarArchivo(){
+        try {
+            raf.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void abrirArchivo(String mode){
+
+        try {
+            raf = new RandomAccessFile("muebles.dat",mode);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void posicionarPuntero(long pos){
+
+        try {
+            raf.seek(pos);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void posicionarPunteroAlFinal(){
+        try {
+            raf.seek(raf.length());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void posicionarPunteroAlInicio(){
+
+        try {
+            raf.seek(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void guardarMueble(Mueble mueble){
+        mueble.write(raf);
+    }
+
+    private Mueble leerMueble(){
+
+        Mueble mueble = new Mueble();
+        mueble.read(raf);
+        return mueble;
+    }
+
+    public Control(String url) {
+        this.url = url;
     }
 
     public void menu() {
@@ -58,6 +133,8 @@ public class Control {
 
     private void modificarRegistro() {
 
+        abrirArchivo("rw");
+        System.out.println("numero de registros: " + numRegistros());
         System.out.print("inserte el numero del registro a modificar: ");
         int pos = In.getInt(0,numRegistros());
 
@@ -107,32 +184,25 @@ public class Control {
                 case 7: break exit;
             }
         }
-        try {
-            raf.seek(Mueble.size()* (pos-1));
-            e.write(raf);
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
+        posicionarPuntero(Mueble.size()* (pos-1));
+        guardarMueble(e);
+        cerrarArchivo();
     }
 
     private void listado() {
 
-        try {
-            raf.seek(0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        abrirArchivo("r");
+        posicionarPunteroAlInicio();
+
         int registros = numRegistros();
         ArrayList<Mueble> l = new ArrayList<>();
 
         for (int i = 0; i < registros; i++){
 
-            Mueble mueble = new Mueble();
-
-            mueble.read(raf);
-
-            l.add(mueble);
+            l.add(leerMueble());
         }
+        cerrarArchivo();
+        System.out.println("=====MODOS DE ORDENAMIENTO=====");
         System.out.println("\t1 - codigo");
         System.out.println("\t2 - nombre");
         System.out.println("\t3 - stock minimo");
@@ -165,7 +235,7 @@ public class Control {
                 break;
         }
         System.out.println("\n1 - Ascendiente");
-        System.out.print("2 - Descendiente");
+        System.out.println("2 - Descendiente");
         System.out.print("\t\topcion: ");
 
         int reverser = In.getInt(1,2);
@@ -180,71 +250,60 @@ public class Control {
         for (Mueble mueble: l){
 
             imprimirRegistro(mueble);
-            System.out.println("----------------------");
         }
         System.out.println();
     }
 
     private void imprimirRegistro(Mueble e) {
 
+        System.out.println("--------------------------");
         System.out.println("\tcodigo: "+e.getCodigo());
         System.out.println("\tnombre: "+e.getNombre());
         System.out.println("\tstock minimo: "+e.getStockMin());
         System.out.println("\tstock maximo: "+e.getStockMax());
         System.out.println("\tstock activo: "+e.getStockAct());
         System.out.println("\tprecio: "+e.getPrecio());
+        System.out.println("--------------------------");
+
     }
 
     private void verRegistro() {
 
-        System.out.println("inserte el numero del registro a consultar: ");
-        int pos = In.getInt(0,numRegistros());
-
-        Mueble e = getRegistro(pos);
-
-        imprimirRegistro(e);
-
+        abrirArchivo("r");
+        System.out.println("numero de registros: " + numRegistros());
+        System.out.print("inserte el numero del registro a consultar: ");
+        int pos = In.getInt(1,numRegistros());
+        imprimirRegistro(getRegistro(pos));
+        cerrarArchivo();
     }
 
     private Mueble getRegistro(int pos){
 
-        try {
-            raf.seek(Mueble.size()*(pos-1));
+        posicionarPuntero(Mueble.size()*(pos-1));
+        Mueble mueble = leerMueble();
 
-            Mueble mueble = new Mueble();
-            mueble.read(raf);
-            return mueble;
-
-        } catch (IOException e) {
-            return null;
-        }
+        return mueble;
     }
 
     private void cambiarRegistro(int pos, Mueble mueble){
 
-        try {
-            raf.seek(Mueble.size()*(pos-1));
-            mueble.write(raf);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        posicionarPuntero(Mueble.size()*(pos-1));
+        guardarMueble(mueble);
     }
 
     private void bajas() {
 
+        abrirArchivo("rw");
+        System.out.println("numero de registros: " + numRegistros());
         System.out.print("inserte el numero del registro a borrar: ");
         int pos = In.getInt(0,numRegistros());
         int registros = numRegistros()-1;
-        for (int i = pos; i <= registros; i++){
 
+        for (int i = pos; i <= registros; i++){
             cambiarRegistro(i,getRegistro(i+1));
         }
-        try {
-            raf.setLength(raf.length()-Mueble.size());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        cambiarLongitudFichero(rafSize()-Mueble.size());
+        cerrarArchivo();
     }
 
     private void altas() {
@@ -269,11 +328,9 @@ public class Control {
 
     private void registrarMueble() {
 
-        try {
-            raf.seek(raf.length());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        abrirArchivo("rw");
+        posicionarPunteroAlFinal();
+
         System.out.print("inserte el codigo: ");
         int codigo = In.getInt();
         System.out.print("inserte el nombre (maximo 25 caracteres): ");
@@ -289,6 +346,7 @@ public class Control {
         double precio = In.getDouble(0,Double.MAX_VALUE);
         System.out.println();
         Mueble mueble = new Mueble(codigo,nombre.toString(),stockMin,stockMax,stockAct,precio);
-        mueble.write(raf);
+        guardarMueble(mueble);
+        cerrarArchivo();
     }
 }
