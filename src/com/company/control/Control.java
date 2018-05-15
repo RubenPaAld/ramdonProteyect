@@ -1,42 +1,29 @@
 package com.company.control;
 
-import com.company.entity.Mueble;
+import com.company.entity.Alumno;
 import com.company.utilities.In;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.*;
 
 public class Control {
 
     private RandomAccessFile raf;
     private String url;
 
-    private int numRegistros() {
-
+    public Control(String url){
+        this.url = url;
         try {
-            return (int) raf.length()/Mueble.size();
+            File f = new File(url);
 
-        } catch (IOException e) {
-            return -1;
-        }
-    }
-
-    private long rafSize() {
-
-        try {
-            return  raf.length();
-        } catch (IOException e) {
-            return -1;
-        }
-    }
-
-    private void cambiarLongitudFichero(long tam){
-
-        try {
-            raf.setLength(tam);
-        } catch (IOException e) {
+            if (!f.isFile()){
+                this.raf = new RandomAccessFile(url,"rw");
+                guardarRegistro(Alumno.ALUMNO_VOID());
+                cerrarArchivo();
+            }
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -52,18 +39,19 @@ public class Control {
     private void abrirArchivo(String mode){
 
         try {
-            raf = new RandomAccessFile("muebles.dat",mode);
+            raf = new RandomAccessFile(url,mode);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    private void posicionarPuntero(long pos){
+    private int numRegistros() {
 
         try {
-            raf.seek(pos);
+            return (int) raf.length()/Alumno.size();
+
         } catch (IOException e) {
-            e.printStackTrace();
+            return -1;
         }
     }
 
@@ -78,25 +66,42 @@ public class Control {
     private void posicionarPunteroAlInicio(){
 
         try {
-            raf.seek(0);
+            raf.seek(Alumno.size());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void guardarMueble(Mueble mueble){
-        mueble.write(raf);
+    private void posicionarPuntero(long pos){
+
+        try {
+            raf.seek(pos);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private Mueble leerMueble(){
+    private Alumno getRegistro(int pos){
 
-        Mueble mueble = new Mueble();
-        mueble.read(raf);
-        return mueble;
+        posicionarPuntero(Alumno.size()*pos);
+        Alumno alumno = new Alumno();
+        alumno.read(raf);
+        return alumno;
     }
 
-    public Control(String url) {
-        this.url = url;
+    private void guardarRegistro(Alumno alumno){
+        alumno.write(raf);
+    }
+
+    private void borrarAlumno(int codigo){
+        posicionarPuntero(codigo*Alumno.size());
+
+        Alumno.ALUMNO_VOID().write(raf);
+    }
+
+    private void actualizarAlumno(Alumno alumno){
+        posicionarPuntero(alumno.getCodigo()*Alumno.size());
+        alumno.write(raf);
     }
 
     public void menu() {
@@ -104,7 +109,7 @@ public class Control {
         exit:
         while(true){
 
-            System.out.println("======MENU======");
+            System.out.println("!======MENU======!");
             System.out.println("\t1 - ALTAS");
             System.out.println("\t2 - BAJAS");
             System.out.println("\t3 - VER REGISTRO");
@@ -115,195 +120,28 @@ public class Control {
 
             switch (In.getInt(1,6)){
 
-                case 1: altas();
-                        break;
-                case 2: bajas();
-                        break;
-                case 3: verRegistro();
-                        break;
-                case 4: listado();
-                        break;
-                case 5: modificarRegistro();
-                        break;
-                case 6: break exit;
+               case 1: altas();
+                   break;
+              case 2: bajas();
+                   break;
+               case 3: verRegistro();
+                   break;
+               case 4: listado();
+                   break;
+               case 5: modificarRegistro();
+                   break;
+               case 6: break exit;
             }
         }
         System.out.println("Fin del programa");
     }
 
-    private void modificarRegistro() {
-
-        abrirArchivo("rw");
-        System.out.println("numero de registros: " + numRegistros());
-        System.out.print("inserte el numero del registro a modificar: ");
-        int pos = In.getInt(0,numRegistros());
-
-        Mueble e = getRegistro(pos);
-
-        exit:
-        while (true){
-
-            System.out.println("\t1 - codigo: "+e.getCodigo());
-            System.out.println("\t2 - nombre: "+e.getNombre());
-            System.out.println("\t3 - stock minimo: "+e.getStockMin());
-            System.out.println("\t4 - stock maximo: "+e.getStockMax());
-            System.out.println("\t5 - stock activo: "+e.getStockAct());
-            System.out.println("\t6 - precio: "+e.getPrecio());
-            System.out.println("\t7 - salir");
-            System.out.print("\t\t opcion: ");
-
-            int op = In.getInt(1,7);
-
-            switch (op) {
-                case 1:
-                    System.out.print("nuevo codigo:");
-                    e.setCodigo(In.getInt());
-                    break;
-                case 2:
-                    System.out.print("nuevo nombre: ");
-                    StringBuilder sb = new StringBuilder(In.getString(25));
-                    sb.setLength(25);
-                    e.setNombre(sb.toString());
-                    break;
-                case 3:
-                    System.out.print("nuevo stock minimo: ");
-                    e.setStockMin(In.getInt(0,e.getStockMax()));
-                    break;
-                case 4:
-                    System.out.print("nuevo stock maximo: ");
-                    e.setStockMax(In.getInt(e.getStockMin(),Integer.MAX_VALUE));
-                    break;
-                case 5:
-                    System.out.print("nuevo stock activo: ");
-                    e.setStockMax(In.getInt(e.getStockMin(),e.getStockMax()));
-                    break;
-                case 6:
-                    System.out.print("nuevo precio: ");
-                    e.setPrecio(In.getDouble(0,Double.MAX_VALUE));
-                    break;
-                case 7: break exit;
-            }
-        }
-        posicionarPuntero(Mueble.size()* (pos-1));
-        guardarMueble(e);
-        cerrarArchivo();
-    }
-
-    private void listado() {
-
-        abrirArchivo("r");
-        posicionarPunteroAlInicio();
-
-        int registros = numRegistros();
-        ArrayList<Mueble> l = new ArrayList<>();
-
-        for (int i = 0; i < registros; i++){
-
-            l.add(leerMueble());
-        }
-        cerrarArchivo();
-        System.out.println("=====MODOS DE ORDENAMIENTO=====");
-        System.out.println("\t1 - codigo");
-        System.out.println("\t2 - nombre");
-        System.out.println("\t3 - stock minimo");
-        System.out.println("\t4 - stock maximo");
-        System.out.println("\t5 - stock activo");
-        System.out.println("\t6 - precio");
-        System.out.print("\t\t opcion: ");
-
-        int op = In.getInt(1,6);
-        Comparator<Mueble> c = null;
-
-        switch (op) {
-            case 1:
-                c = Comparator.comparingInt(Mueble::getCodigo);
-                break;
-            case 2:
-                c = Comparator.comparing(Mueble::getNombre);
-                break;
-            case 3:
-                c = Comparator.comparingInt(Mueble::getStockMin);
-                break;
-            case 4:
-                c = Comparator.comparingInt(Mueble::getStockMax);
-                break;
-            case 5:
-                c = Comparator.comparingInt(Mueble::getStockAct);
-                break;
-            case 6:
-                c = Comparator.comparingDouble(Mueble::getPrecio);
-                break;
-        }
-        System.out.println("\n1 - Ascendiente");
-        System.out.println("2 - Descendiente");
-        System.out.print("\t\topcion: ");
-
-        int reverser = In.getInt(1,2);
-
-        if (reverser == 2)
-            c = c.reversed();
-
-        Collections.sort(l,c);
-
-        System.out.println("===LISTADO DE MUEBLES===");
-
-        for (Mueble mueble: l){
-
-            imprimirRegistro(mueble);
-        }
-        System.out.println();
-    }
-
-    private void imprimirRegistro(Mueble e) {
-
-        System.out.println("--------------------------");
-        System.out.println("\tcodigo: "+e.getCodigo());
-        System.out.println("\tnombre: "+e.getNombre());
-        System.out.println("\tstock minimo: "+e.getStockMin());
-        System.out.println("\tstock maximo: "+e.getStockMax());
-        System.out.println("\tstock activo: "+e.getStockAct());
-        System.out.println("\tprecio: "+e.getPrecio());
-        System.out.println("--------------------------");
-
-    }
-
-    private void verRegistro() {
-
-        abrirArchivo("r");
-        System.out.println("numero de registros: " + numRegistros());
-        System.out.print("inserte el numero del registro a consultar: ");
-        int pos = In.getInt(1,numRegistros());
-        imprimirRegistro(getRegistro(pos));
-        cerrarArchivo();
-    }
-
-    private Mueble getRegistro(int pos){
-
-        posicionarPuntero(Mueble.size()*(pos-1));
-        Mueble mueble = leerMueble();
-
-        return mueble;
-    }
-
-    private void cambiarRegistro(int pos, Mueble mueble){
-
-        posicionarPuntero(Mueble.size()*(pos-1));
-        guardarMueble(mueble);
-    }
-
     private void bajas() {
 
         abrirArchivo("rw");
-        System.out.println("numero de registros: " + numRegistros());
-        System.out.print("inserte el numero del registro a borrar: ");
-        int pos = In.getInt(0,numRegistros());
-        int registros = numRegistros()-1;
+        Alumno alumno = solicitarAlumno();
 
-        for (int i = pos; i <= registros; i++){
-            cambiarRegistro(i,getRegistro(i+1));
-        }
-        cambiarLongitudFichero(rafSize()-Mueble.size());
-        cerrarArchivo();
+        borrarAlumno(alumno.getCodigo());
     }
 
     private void altas() {
@@ -312,14 +150,14 @@ public class Control {
         while(true){
 
             System.out.println("======MENU ALTAS======");
-            System.out.println("\t1 - REGISTRAR MUEBLE");
+            System.out.println("\t1 - REGISTRAR ALUMNO");
             System.out.println("\t2 - SALIR");
             System.out.print("\t\t Opcion: ");
 
             switch (In.getInt(1,2)){
 
                 case 1: registrarMueble();
-                        break;
+                    break;
                 case 2: break exit;
             }
             System.out.println();
@@ -329,24 +167,119 @@ public class Control {
     private void registrarMueble() {
 
         abrirArchivo("rw");
-        posicionarPunteroAlFinal();
 
-        System.out.print("inserte el codigo: ");
-        int codigo = In.getInt();
+        int codigo;
+
+        do{
+            System.out.print("inserte el codigo: ");
+            codigo = In.getInt(1,Integer.MAX_VALUE);
+
+            if (codigo < numRegistros()){
+                if (Alumno.isVoid(getRegistro(codigo)))
+                    break;
+                else
+                    System.out.println("El registro ya esta en uso.");
+            }else{
+                break;
+            }
+        }while(true);
+
         System.out.print("inserte el nombre (maximo 25 caracteres): ");
-        StringBuilder nombre = new StringBuilder(In.getString(25));
-        nombre.setLength(25);
-        System.out.print("inserte el stock minimo: ");
-        int stockMin = In.getInt(0,Integer.MAX_VALUE);
-        System.out.print("inserte el stock maximo: ");
-        int stockMax = In.getInt(stockMin,Integer.MAX_VALUE);
-        System.out.print("inserte el stock activo: ");
-        int stockAct = In.getInt(stockMin,stockMax);
-        System.out.print("inserte el precio: ");
-        double precio = In.getDouble(0,Double.MAX_VALUE);
-        System.out.println();
-        Mueble mueble = new Mueble(codigo,nombre.toString(),stockMin,stockMax,stockAct,precio);
-        guardarMueble(mueble);
+        String nombre = In.getString(25);
+
+        System.out.print("inserte la nota 1: ");
+        int nota1 = In.getInt(1,10);
+        System.out.print("inserte la nota 2: ");
+        int nota2 = In.getInt(1,10);
+
+        Alumno alumno = new Alumno(codigo,nombre,nota1,nota2);
+
+        Alumno av = Alumno.ALUMNO_VOID();
+        posicionarPuntero(numRegistros()*Alumno.size());
+        while (numRegistros() < codigo){
+            guardarRegistro(av);
+        }
+        posicionarPuntero(codigo*Alumno.size());
+        guardarRegistro(alumno);
         cerrarArchivo();
     }
+
+    private void listado(){
+
+        abrirArchivo("r");
+        posicionarPunteroAlInicio();
+
+        int n = numRegistros();
+        System.out.println("numero de registros: " + n);
+
+        for (int i = 1; i < n; i++){
+
+            Alumno alumno = getRegistro(i);
+
+            System.out.println(i+ "----------------");
+            System.out.println(alumno.toString());
+            System.out.println("-------------------");
+        }
+    }
+
+    private Alumno solicitarAlumno(){
+        int n = numRegistros();
+        do {
+            System.out.print("inserte el codigo del alumno  (1, " + (n-1) + "): ");
+            int codigo = In.getInt(1,n-1);
+            Alumno alumno = getRegistro(codigo);
+
+            if (Alumno.isVoid(alumno))
+                System.out.println("no existe el alumno selecionado");
+            else
+                return alumno;
+
+        }while (true);
+    }
+
+    private void verRegistro() {
+
+        abrirArchivo("r");
+
+        Alumno alumno = solicitarAlumno();
+
+        System.out.println(alumno);
+    }
+
+    private void modificarRegistro() {
+
+        abrirArchivo("rw");
+
+        Alumno alumno = solicitarAlumno();
+
+        exit:
+        while (true){
+
+            System.out.println("\t1 - nombre: "+alumno.getNombre());
+            System.out.println("\t2 - nota 1: "+alumno.getNota1());
+            System.out.println("\t3 - nota 2: "+alumno.getNota2());
+            System.out.println("\t4 - salir");
+            System.out.print("\t\t opcion: ");
+
+            int op = In.getInt(1,4);
+
+            switch (op) {
+                case 1:
+                    System.out.print("nuevo nombre: ");
+                    alumno.setNombre(In.getString(25));
+                    break;
+                case 2:
+                    System.out.print("nueva nota 1: ");
+                    alumno.setNota1(In.getFloat(1,10));
+                    break;
+                case 3:
+                    System.out.print("nueva nota 2: ");
+                    alumno.setNota2(In.getFloat(1,10));
+                    break;
+                case 4: break exit;
+            }
+        }
+        actualizarAlumno(alumno);
+    }
+
 }

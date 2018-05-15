@@ -10,7 +10,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Control control = new Control("muebles.dat");
+        Control control = new Control("alumnos.dat");
         control.menu();
 
     }

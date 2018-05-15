@@ -94,10 +94,9 @@ public class Mueble {
         try {
             setCodigo(raf.readInt());
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 25; i++){
-
+            for (int i = 0; i < 25; i++)
                 sb.append(raf.readChar());
-            }
+
             setNombre(sb.toString());
             setStockMin(raf.readInt());
             setStockMax(raf.readInt());

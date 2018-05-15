@@ -75,6 +75,40 @@ public class In {
         }
     }
 
+    public static float getFloat (float min, float max) {
+
+        while (true){
+
+            try{
+                String s = escaner.nextLine();
+                s = s.replace(',','.');
+                float n = Float.parseFloat(s);
+
+                if (n >= min && n <= max)
+                    return n;
+                else throw new NumberFormatException();
+
+            }catch (NumberFormatException e){
+                System.out.println("Inserte un numero entre " + min + " y " + max);
+            }
+        }
+    }
+
+    public static float getFloat () {
+
+        while (true){
+
+            try{
+                String s = escaner.nextLine();
+                s = s.replace(',','.');
+                float n = Float.parseFloat(s);
+
+            }catch (NumberFormatException e){
+                System.out.println("Inserte un numero entre " + Float.MIN_VALUE + " y " + Float.MAX_VALUE);
+            }
+        }
+    }
+
     /**
      * retorna un numero de tipo double. En caso de introducir un valor incorrecto o un numero que desborde el tamaño del tipo int
      * se volveria a solicitar uno nieivo hasta introducr uno valido.
